@@ -1,0 +1,44 @@
+version: '3.8'
+services:
+  #MySQL用コンテナ
+  db:
+    container_name: mysql_latest
+    image: mysql/mysql-server:latest
+    restart: always
+    volumes:
+      - ./mysql/seed:/docker-entrypoint-initdb.d # 初回データ実行
+      - ./mysql/db:/var/lib/mysql # データ永続化
+    ports:
+      - 3306:3306
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_USER=test
+      - MYSQL_PASSWORD=test
+      - MYSQL_DATABASE=test
+
+  #phpMyAdmin用コンテナ
+  phpmyadmin:
+    container_name: phpMyAdmin_v2
+    image: phpmyadmin/phpmyadmin
+    environment:
+      PMA_HOST: db #mysqlのサービス名
+      PMA_USER: test #phpmyadminにログインするユーザ
+      PMA_PASSWORD: test #phpmyadminにログインするユーザのパスワード
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - db
+
+  #php用コンテナ
+  web_v2:
+    container_name: web_v2
+    build: ./php
+    volumes:
+      # FRONTEND
+      - ./index.php:/var/www/html/index.php
+      - ./ports.conf:/etc/apache2/ports.conf
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
